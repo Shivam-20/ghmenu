@@ -73,7 +73,7 @@ async function listRepos() {
 }
 
 /**
- * View a single repo's details.
+ * View a single repo's details + action menu.
  */
 async function viewRepo(fullName) {
   const spinner = ora('Loading repo details...').start();
@@ -92,10 +92,145 @@ async function viewRepo(fullName) {
     console.log(`  Stars:       ${r.stargazers_count}`);
     console.log(`  Forks:       ${r.forks_count}`);
     console.log(`  Issues:      ${r.open_issues_count}`);
+    console.log(`  Archived:    ${r.archived ? 'Yes' : 'No'}`);
     console.log(`  URL:         ${r.html_url}`);
     console.log(`  Updated:     ${new Date(r.updated_at).toLocaleDateString()}`);
     console.log();
 
+    // Show action menu for this repo
+    const action = await menu(`Actions for ${r.full_name}`, [
+      { name: 'Clone', value: 'clone' },
+      { name: 'Fork', value: 'fork' },
+      { name: 'Change visibility', value: 'visibility' },
+      { name: r.archived ? 'Unarchive' : 'Archive', value: 'archive' },
+      { name: 'Back', value: 'back' },
+    ]);
+
+    switch (action) {
+      case 'clone':
+        await cloneRepo(r.full_name, r.clone_url || r.ssh_url);
+        break;
+      case 'fork':
+        await forkRepo(r.full_name);
+        break;
+      case 'visibility':
+        await changeVisibility(r.full_name, r.private);
+        break;
+      case 'archive':
+        await toggleArchive(r.full_name, r.archived);
+        break;
+      case 'back':
+        return;
+    }
+  } catch (err) {
+    spinner.stop();
+    error(err.message);
+    await pause();
+  }
+}
+
+/**
+ * Clone a repository.
+ */
+async function cloneRepo(fullName, cloneUrl) {
+  const dir = await askText('Clone into directory (default: current):', { default: fullName.split('/')[1] });
+
+  const spinner = ora(`Cloning ${fullName}...`).start();
+
+  try {
+    await runGh(['repo', 'clone', fullName, dir]);
+    spinner.stop();
+    success(`Cloned ${fullName} into ${dir}`);
+    await pause();
+  } catch (err) {
+    spinner.stop();
+    error(err.message);
+    await pause();
+  }
+}
+
+/**
+ * Fork a repository.
+ */
+async function forkRepo(fullName) {
+  const spinner = ora(`Forking ${fullName}...`).start();
+
+  try {
+    await runGh(['repo', 'fork', fullName, '--clone=false']);
+    spinner.stop();
+    success(`Forked ${fullName}`);
+    await pause();
+  } catch (err) {
+    spinner.stop();
+    error(err.message);
+    await pause();
+  }
+}
+
+/**
+ * Change repository visibility.
+ */
+async function changeVisibility(fullName, isPrivate) {
+  const current = isPrivate ? 'private' : 'public';
+  const newVis = current === 'private' ? 'public' : 'private';
+
+  const confirmed = await askConfirm(
+    `Change ${fullName} from ${current} to ${newVis}?`
+  );
+
+  if (!confirmed) {
+    info('Visibility change cancelled.');
+    await pause();
+    return;
+  }
+
+  const spinner = ora('Changing visibility...').start();
+
+  try {
+    const octokit = await getClient();
+    const [owner, repo] = fullName.split('/');
+    await octokit.rest.repos.update({
+      owner,
+      repo,
+      private: newVis === 'private',
+    });
+
+    spinner.stop();
+    success(`Visibility changed to ${newVis}`);
+    await pause();
+  } catch (err) {
+    spinner.stop();
+    error(err.message);
+    await pause();
+  }
+}
+
+/**
+ * Toggle archive status.
+ */
+async function toggleArchive(fullName, isArchived) {
+  const action = isArchived ? 'unarchive' : 'archive';
+  const confirmed = await askConfirm(
+    `${action === 'archive' ? 'Archive' : 'Unarchive'} ${fullName}?`
+  );
+
+  if (!confirmed) {
+    info(`${action} cancelled.`);
+    await pause();
+    return;
+  }
+
+  const spinner = ora(`${action === 'archive' ? 'Archiving' : 'Unarchiving'} repository...`).start();
+
+  try {
+    if (action === 'archive') {
+      await runGh(['repo', 'archive', fullName, '--yes']);
+    } else {
+      await runGh(['repo', 'unarchive', fullName, '--yes']);
+    }
+
+    spinner.stop();
+    success(`Repository ${action}d.`);
     await pause();
   } catch (err) {
     spinner.stop();
