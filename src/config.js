@@ -1,23 +1,31 @@
 const { spawn } = require('child_process');
-const { promisify } = require('util');
+const logger = require('./logger');
 
 /**
  * Get GitHub token from gh CLI or environment variable.
  * Priority: 1) gh auth token  2) GITHUB_TOKEN env var
  */
 async function getToken() {
+  logger.debug('Resolving GitHub token...');
   // Try gh CLI first
   try {
     const token = await runGh(['auth', 'token']);
-    if (token) return token.trim();
-  } catch {
-    // gh not installed or not logged in
+    if (token) {
+      logger.debug('Token resolved via gh CLI');
+      return token.trim();
+    }
+  } catch (err) {
+    logger.debug('gh auth token failed:', err.message);
   }
 
   // Fallback to env var
   const envToken = process.env.GITHUB_TOKEN;
-  if (envToken) return envToken;
+  if (envToken) {
+    logger.debug('Token resolved via GITHUB_TOKEN env var');
+    return envToken;
+  }
 
+  logger.debug('No token found');
   return null;
 }
 
@@ -25,6 +33,7 @@ async function getToken() {
  * Run a gh CLI command and return stdout.
  */
 function runGh(args) {
+  logger.debug('$ gh', args.join(' '));
   return new Promise((resolve, reject) => {
     const proc = spawn('gh', args, {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -39,8 +48,11 @@ function runGh(args) {
 
     proc.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(stderr || `gh exited with code ${code}`));
+        const err = new Error(stderr || `gh exited with code ${code}`);
+        logger.debug('gh failed:', err.message);
+        reject(err);
       } else {
+        logger.debug('gh success');
         resolve(stdout);
       }
     });
