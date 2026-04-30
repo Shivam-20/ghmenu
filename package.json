@@ -1,0 +1,30 @@
+{
+  "name": "ghmenu",
+  "version": "0.1.0",
+  "description": "A lightweight terminal menu for GitHub",
+  "main": "index.js",
+  "bin": {
+    "ghmenu": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "github",
+    "cli",
+    "menu",
+    "terminal"
+  ],
+  "author": "Shivam-20",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "chalk": "^5.0.0",
+    "octokit": "^4.0.0",
+    "ora": "^8.0.0"
+  }
+}
