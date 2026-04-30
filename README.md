@@ -21,9 +21,34 @@ ghmenu
 
 ## Features
 
-- **Repositories**: List, view, create, delete
+- **Repositories**: List, view, create, delete, clone, fork, change visibility, archive
+- **Search GitHub**: Repositories, issues, code, users
+- **Profiles**: Save repo contexts, switch between them instantly
 - **Auth**: Check status, login (web), logout, switch account
 - **Navigation**: Arrow keys or number keys (1, 2, 3...)
+
+## Profiles
+
+Save frequently-used repos as named profiles for instant context switching.
+
+```bash
+# Start with a profile
+ghmenu --profile work
+ghmenu -p work
+
+# Manage profiles from the menu
+# [3] Profiles → Add / Remove / Switch / Clear
+```
+
+Profiles are stored in `~/.config/ghmenu/profiles.json`.
+
+When a profile is active, the repo context is shown in the header:
+```
+ghmenu  [work: mycompany/product]
+──────
+[1] Repositories
+...
+```
 
 ## Auth
 

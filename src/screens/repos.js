@@ -1,6 +1,7 @@
 const { menu, askText, askConfirm, separator, error, success, info, pause } = require('../ui');
 const { getClient } = require('../github');
-const { runGh } = require('../config');
+const { runGh, runGhRepoScoped } = require('../config');
+const { getActiveRepo } = require('../profiles');
 const ora = require('ora');
 
 /**
@@ -8,14 +9,24 @@ const ora = require('ora');
  */
 async function reposMenu() {
   while (true) {
-    const choice = await menu('Repositories', [
+    const activeRepo = getActiveRepo();
+    const choices = [
       { name: 'List my repos', value: 'list' },
       { name: 'Create new repo', value: 'create' },
       { name: 'Delete repo', value: 'delete' },
       { name: 'Back to main menu', value: 'back' },
-    ]);
+    ];
+
+    if (activeRepo) {
+      choices.unshift({ name: `Quick: ${activeRepo}`, value: 'quick' });
+    }
+
+    const choice = await menu('Repositories', choices);
 
     switch (choice) {
+      case 'quick':
+        if (activeRepo) await viewRepo(activeRepo);
+        break;
       case 'list':
         await listRepos();
         break;
@@ -224,9 +235,9 @@ async function toggleArchive(fullName, isArchived) {
 
   try {
     if (action === 'archive') {
-      await runGh(['repo', 'archive', fullName, '--yes']);
+      await runGhRepoScoped(['repo', 'archive', fullName, '--yes']);
     } else {
-      await runGh(['repo', 'unarchive', fullName, '--yes']);
+      await runGhRepoScoped(['repo', 'unarchive', fullName, '--yes']);
     }
 
     spinner.stop();

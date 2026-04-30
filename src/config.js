@@ -1,5 +1,6 @@
 const { spawn } = require('child_process');
 const logger = require('./logger');
+const { getActiveRepo } = require('./profiles');
 
 /**
  * Get GitHub token from gh CLI or environment variable.
@@ -59,4 +60,16 @@ function runGh(args) {
   });
 }
 
-module.exports = { getToken, runGh };
+/**
+ * Run a gh CLI command, injecting --repo if an active profile is set.
+ * Use this for repo-scoped commands.
+ */
+function runGhRepoScoped(args) {
+  const repo = getActiveRepo();
+  if (repo) {
+    return runGh([...args, '--repo', repo]);
+  }
+  return runGh(args);
+}
+
+module.exports = { getToken, runGh, runGhRepoScoped };
