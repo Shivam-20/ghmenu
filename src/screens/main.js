@@ -2,6 +2,7 @@ const { menu } = require('../ui');
 const { getActiveProfile, getActiveRepo } = require('../profiles');
 const reposScreen = require('./repos');
 const prsScreen = require('./prs');
+const gitScreen = require('./git');
 const authScreen = require('./auth');
 const searchScreen = require('./search');
 const profilesScreen = require('./profiles');
@@ -22,6 +23,7 @@ async function mainMenu() {
     const choice = await menu(title, [
       { name: 'Repositories', value: 'repos' },
       { name: 'Pull Requests', value: 'prs' },
+      { name: 'Git Operations', value: 'git' },
       { name: 'Search GitHub', value: 'search' },
       { name: 'Profiles', value: 'profiles' },
       { name: 'Auth & Settings', value: 'auth' },
@@ -34,6 +36,9 @@ async function mainMenu() {
         break;
       case 'prs':
         await prsScreen.show();
+        break;
+      case 'git':
+        await gitScreen.show();
         break;
       case 'search':
         await searchScreen.show();

@@ -23,6 +23,7 @@ ghmenu
 
 - **Repositories**: List, view, create, delete, clone, fork, change visibility, archive
 - **Pull Requests**: List, view, create, merge, close, reopen
+- **Git Operations**: Revert commits, reset commits (soft/mixed/hard) with safety guards
 - **Search GitHub**: Repositories, issues, code, users
 - **Profiles**: Save repo contexts, switch between them instantly
 - **Auth**: Check status, login (web), logout, switch account
